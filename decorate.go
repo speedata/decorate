@@ -4,6 +4,7 @@ import (
 	"github.com/speedata/decorate/processor"
 	"io/ioutil"
 
+	_ "github.com/speedata/decorate/inputfilter/text"
 	_ "github.com/speedata/decorate/inputfilter/xml"
 
 	_ "github.com/speedata/decorate/outputfilter/html"
