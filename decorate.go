@@ -11,6 +11,14 @@ import (
 	_ "github.com/speedata/decorate/outputfilter/text"
 )
 
+func InputFilters() []string {
+	return processor.InputFilters()
+}
+
+func OutputFilters() []string {
+	return processor.OutputFilters()
+}
+
 // If inputfilter is the empty string, it should be guessed from the input string.
 func HighlightFile(filename string, inputfilter string, outputfilter string) (string, error) {
 	data, err := ioutil.ReadFile(filename)

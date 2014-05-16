@@ -52,6 +52,22 @@ func RegisterOutputFilter(name string, filter OutputFilter) {
 	outputfilters[name] = filter
 }
 
+func InputFilters() []string {
+	ret := make([]string, 0, len(inputfilters))
+	for v, _ := range inputfilters {
+		ret = append(ret, v)
+	}
+	return ret
+}
+
+func OutputFilters() []string {
+	ret := make([]string, 0, len(outputfilters))
+	for v, _ := range outputfilters {
+		ret = append(ret, v)
+	}
+	return ret
+}
+
 func Highlight(inputfilter, outputfilter string, source []byte) (string, error) {
 	ifilter := inputfilters[inputfilter]
 	if ifilter == nil {
