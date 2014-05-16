@@ -8,16 +8,21 @@ import (
 	"log"
 )
 
-func init() {
-	processor.RegisterInputFilter("xml", Filter{})
+type inputfilter struct {
 }
 
-type Tokenizer struct {
+func init() {
+	processor.RegisterInputFilter("xml", inputfilter{})
+}
+
+// tokenizer implements the processor.Tokenizer interface which is used
+// in the output filter
+type tokenizer struct {
 	c   []*processor.Token
 	pos int
 }
 
-func (t *Tokenizer) AppendToken(typ int, text string) {
+func (t *tokenizer) appendToken(typ processor.Tokentype, text string) {
 	prev_pos := len(t.c) - 1
 	if prev_pos >= 0 {
 		prev_token := t.c[prev_pos]
@@ -32,7 +37,8 @@ func (t *Tokenizer) AppendToken(typ int, text string) {
 	t.c = append(t.c, tok)
 }
 
-func (t *Tokenizer) NextToken() *processor.Token {
+// The output filter calls NextToken until no token is left over
+func (t *tokenizer) NextToken() *processor.Token {
 	if t.pos >= len(t.c) {
 		return nil
 	}
@@ -41,13 +47,10 @@ func (t *Tokenizer) NextToken() *processor.Token {
 	return tok
 }
 
-type Filter struct {
-}
-
-func (f Filter) Highlight(data []byte) (processor.Tokenizer, error) {
+func (f inputfilter) Highlight(data []byte) (processor.Tokenizer, error) {
 	// we should not use xml.Decoder for that purpose, because it's not a 1:1 copy of the input
 	// but for a start, it's better than nothing, or?
-	t := &Tokenizer{}
+	t := &tokenizer{}
 	r := bytes.NewReader(data)
 	decoder := xml.NewDecoder(r)
 	for {
@@ -57,17 +60,17 @@ func (f Filter) Highlight(data []byte) (processor.Tokenizer, error) {
 		}
 		switch v := tok.(type) {
 		case xml.StartElement:
-			t.AppendToken(processor.NAMETAG, fmt.Sprintf("<%s", v.Name.Local))
+			t.appendToken(processor.NAMETAG, fmt.Sprintf("<%s", v.Name.Local))
 			for _, v := range v.Attr {
-				t.AppendToken(processor.RAW, " ")
-				t.AppendToken(processor.NAMEATTRIBUTE, v.Name.Local+"=")
-				t.AppendToken(processor.LITERALSTRING, fmt.Sprintf(`"%s"`, v.Value))
+				t.appendToken(processor.RAW, " ")
+				t.appendToken(processor.NAMEATTRIBUTE, v.Name.Local+"=")
+				t.appendToken(processor.LITERALSTRING, fmt.Sprintf(`"%s"`, v.Value))
 			}
-			t.AppendToken(processor.NAMETAG, fmt.Sprintf(">"))
+			t.appendToken(processor.NAMETAG, fmt.Sprintf(">"))
 		case xml.EndElement:
-			t.AppendToken(processor.NAMETAG, fmt.Sprintf(`</%s>`, v.Name.Local))
+			t.appendToken(processor.NAMETAG, fmt.Sprintf(`</%s>`, v.Name.Local))
 		case xml.CharData:
-			t.AppendToken(processor.RAW, string(v.Copy()))
+			t.appendToken(processor.RAW, string(v.Copy()))
 		default:
 			log.Printf(">>> %T", v)
 		}

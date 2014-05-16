@@ -7,13 +7,20 @@ import (
 	"strings"
 )
 
-type filter struct{}
+type outputfilter struct{}
 
 func init() {
-	processor.RegisterOutputFilter("html", filter{})
+	processor.RegisterOutputFilter("html", outputfilter{})
 }
 
-func (f filter) Render(t processor.Tokenizer) string {
+// Gets called when the user requests HTML output
+func (f outputfilter) Render(t processor.Tokenizer) string {
+	classes := map[processor.Tokentype]string{
+		processor.NAMETAG:       "nt",
+		processor.NAMEATTRIBUTE: "na",
+		processor.LITERALSTRING: "s",
+	}
+
 	var out []string
 	out = append(out, fmt.Sprint(`<div class="highlight"><pre>`))
 
@@ -23,9 +30,9 @@ func (f filter) Render(t processor.Tokenizer) string {
 			break
 		}
 		if t.Typ == processor.RAW {
-			out = append(out, fmt.Sprint(t.Value))
+			out = append(out, t.Value)
 		} else {
-			out = append(out, fmt.Sprintf(`<span class="%s">%s</span>`, processor.Classes[t.Typ], html.EscapeString(t.Value)))
+			out = append(out, fmt.Sprintf(`<span class="%s">%s</span>`, classes[t.Typ], html.EscapeString(t.Value)))
 		}
 	}
 	out = append(out, fmt.Sprint(`</pre></div>`))
