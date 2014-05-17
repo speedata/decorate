@@ -15,7 +15,7 @@ func init() {
 
 // Gets called when the user requests HTML output
 func (f outputfilter) Render(t processor.Tokenizer) string {
-	classes_major := map[processor.TokenMajor]string{
+	classes_major := map[processor.TypeMajor]string{
 		processor.MAJOR_COMMENT:  "c",
 		processor.MAJOR_STRING:   "s",
 		processor.MAJOR_ERROR:    "err",
@@ -25,7 +25,7 @@ func (f outputfilter) Render(t processor.Tokenizer) string {
 		processor.MAJOR_NUMBER:   "num",
 		processor.MAJOR_VARIABLE: "var",
 	}
-	classes_minor := map[processor.TokenMinor]string{
+	classes_minor := map[processor.TypeMinor]string{
 		processor.MINOR_NAME_ATTRIBUTE: "natt",
 		processor.MINOR_NAME_TAG:       "ntag",
 	}

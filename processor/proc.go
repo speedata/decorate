@@ -18,14 +18,14 @@ type Tokenizer interface {
 	NextToken() *Token
 }
 
-type TokenMajor int
-type TokenMinor int
+type TypeMajor int
+type TypeMinor int
 
 // This is the basic data structure in the intermediate format between
 // the input filter and output filter.
 type Token struct {
-	Major TokenMajor
-	Minor TokenMinor
+	Major TypeMajor
+	Minor TypeMinor
 	Value string
 }
 
@@ -41,7 +41,7 @@ func init() {
 
 // These are the allowed token types
 const (
-	MAJOR_RAW TokenMajor = iota
+	MAJOR_RAW TypeMajor = iota
 	MAJOR_COMMENT
 	MAJOR_STRING
 	MAJOR_ERROR
@@ -50,7 +50,7 @@ const (
 	MAJOR_NAME
 	MAJOR_NUMBER
 	MAJOR_VARIABLE
-	MINOR_RAW TokenMinor = iota
+	MINOR_RAW TypeMinor = iota
 	MINOR_NAME_TAG
 	MINOR_NAME_ATTRIBUTE
 )

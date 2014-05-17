@@ -14,7 +14,7 @@ func init() {
 
 // Gets called when the user requests HTML output
 func (f outputfilter) Render(t processor.Tokenizer) string {
-	tagnames := map[processor.TokenMajor]string{
+	tagnames := map[processor.TypeMajor]string{
 		processor.MAJOR_RAW:      "raw",
 		processor.MAJOR_COMMENT:  "comment",
 		processor.MAJOR_STRING:   "string",

@@ -23,7 +23,7 @@ type tokenizer struct {
 	pos int
 }
 
-func (t *tokenizer) appendToken(major processor.TokenMajor, minor processor.TokenMinor, text string) {
+func (t *tokenizer) appendToken(major processor.TypeMajor, minor processor.TypeMinor, text string) {
 	prev_pos := len(t.c) - 1
 	if prev_pos >= 0 {
 		prev_token := t.c[prev_pos]
