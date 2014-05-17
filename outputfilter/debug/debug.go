@@ -3,7 +3,6 @@ package debug
 import (
 	"fmt"
 	"github.com/speedata/decorate/processor"
-	"strings"
 )
 
 type outputfilter struct{}
@@ -12,8 +11,8 @@ func init() {
 	processor.RegisterOutputFilter("debug", outputfilter{})
 }
 
-// Gets called when the user requests HTML output
-func (f outputfilter) Render(t processor.Tokenizer) string {
+// Gets called when the user requests debug output
+func (f outputfilter) Render(in chan processor.Token, out chan string) {
 	tagnames := map[processor.TypeMajor]string{
 		processor.MAJOR_RAW:      "raw",
 		processor.MAJOR_COMMENT:  "comment",
@@ -26,14 +25,15 @@ func (f outputfilter) Render(t processor.Tokenizer) string {
 		processor.MAJOR_VARIABLE: "variable",
 	}
 
-	var out []string
-
 	for {
-		t := t.NextToken()
-		if t == nil {
-			break
+		select {
+		case t, ok := <-in:
+			if ok {
+				out <- fmt.Sprintf("%-5s: %q\n", tagnames[t.Major], t.Value)
+			} else {
+				close(out)
+				return
+			}
 		}
-		out = append(out, fmt.Sprintf("%-5s: %q\n", tagnames[t.Major], t.Value))
 	}
-	return strings.Join(out, "")
 }

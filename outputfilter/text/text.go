@@ -2,24 +2,24 @@ package text
 
 import (
 	"github.com/speedata/decorate/processor"
-	"strings"
 )
 
-type filter struct{}
+type outputfilter struct{}
 
 func init() {
-	processor.RegisterOutputFilter("text", filter{})
+	processor.RegisterOutputFilter("text", outputfilter{})
 }
 
-func (f filter) Render(t processor.Tokenizer) string {
-	var out []string
-
+func (f outputfilter) Render(in chan processor.Token, out chan string) {
 	for {
-		t := t.NextToken()
-		if t == nil {
-			break
+		select {
+		case t, ok := <-in:
+			if ok {
+				out <- t.Value
+			} else {
+				close(out)
+				return
+			}
 		}
-		out = append(out, t.Value)
 	}
-	return strings.Join(out, "")
 }

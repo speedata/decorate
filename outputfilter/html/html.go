@@ -14,7 +14,7 @@ func init() {
 }
 
 // Gets called when the user requests HTML output
-func (f outputfilter) Render(t processor.Tokenizer) string {
+func (f outputfilter) Render(in chan processor.Token, out chan string) {
 	classes_major := map[processor.TypeMajor]string{
 		processor.MAJOR_COMMENT:  "c",
 		processor.MAJOR_STRING:   "s",
@@ -30,26 +30,29 @@ func (f outputfilter) Render(t processor.Tokenizer) string {
 		processor.MINOR_NAME_TAG:       "ntag",
 	}
 
-	var out []string
-	out = append(out, fmt.Sprint(`<div class="highlight"><pre>`))
+	out <- fmt.Sprint(`<div class="highlight"><pre>`)
 	var cls string
 
 	for {
-		t := t.NextToken()
-		if t == nil {
-			break
-		}
-		if t.Major == processor.MAJOR_RAW {
-			out = append(out, t.Value)
-		} else {
-			if t.Minor == processor.MINOR_RAW {
-				cls = classes_major[t.Major]
+		select {
+		case t, ok := <-in:
+			if ok {
+				if t.Major == processor.MAJOR_RAW {
+					out <- html.EscapeString(t.Value)
+				} else {
+					if t.Minor == processor.MINOR_RAW {
+						cls = classes_major[t.Major]
+					} else {
+						cls = strings.Join([]string{classes_major[t.Major], classes_minor[t.Minor]}, " ")
+					}
+
+					out <- fmt.Sprintf(`<span class="%s">%s</span>`, cls, html.EscapeString(t.Value))
+				}
 			} else {
-				cls = strings.Join([]string{classes_major[t.Major], classes_minor[t.Minor]}, " ")
+				out <- fmt.Sprint(`</pre></div>`)
+				close(out)
+				return
 			}
-			out = append(out, fmt.Sprintf(`<span class="%s">%s</span>`, cls, html.EscapeString(t.Value)))
 		}
 	}
-	out = append(out, fmt.Sprint(`</pre></div>`))
-	return strings.Join(out, "")
 }

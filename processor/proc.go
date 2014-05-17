@@ -2,20 +2,16 @@ package processor
 
 import (
 	"errors"
+	"strings"
 )
 
 // The input filter is expected to implement function Highlight which returns a Tokenizer.
 type InputFilter interface {
-	Highlight([]byte) (Tokenizer, error)
+	Highlight([]byte, chan Token)
 }
 
 type OutputFilter interface {
-	Render(Tokenizer) string
-}
-
-// The output filter calls NextToken until it returns nil.
-type Tokenizer interface {
-	NextToken() *Token
+	Render(chan Token, chan string)
 }
 
 type TypeMajor int
@@ -97,10 +93,20 @@ func Highlight(inputfilter, outputfilter string, source []byte) (string, error) 
 		return "", errors.New("Output filter not declared")
 	}
 
-	tokenizer, err := ifilter.Highlight(source)
-	if err != nil {
-		return "", err
+	chain := make(chan Token, 0)
+	res := make(chan string, 0)
+	go ifilter.Highlight(source, chain)
+	go ofilter.Render(chain, res)
+	var ret []string
+	for {
+		select {
+		case str, ok := <-res:
+			if ok {
+				ret = append(ret, str)
+			} else {
+				return strings.Join(ret, ""), nil
+			}
+		}
 	}
-	ret := ofilter.Render(tokenizer)
-	return ret, nil
+	return "", nil
 }
