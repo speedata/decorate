@@ -16,6 +16,7 @@ import (
 	_ "github.com/speedata/decorate/inputfilter/xml"
 
 	// and all output filters
+	_ "github.com/speedata/decorate/outputfilter/debug"
 	_ "github.com/speedata/decorate/outputfilter/html"
 	_ "github.com/speedata/decorate/outputfilter/text"
 )
