@@ -15,7 +15,7 @@ func init() {
 
 // Gets called when the user requests HTML output
 func (f outputfilter) Render(t processor.Tokenizer) string {
-	classes := map[processor.TokenMajor]string{
+	classes_major := map[processor.TokenMajor]string{
 		processor.MAJOR_COMMENT:  "c",
 		processor.MAJOR_STRING:   "s",
 		processor.MAJOR_ERROR:    "err",
@@ -25,9 +25,14 @@ func (f outputfilter) Render(t processor.Tokenizer) string {
 		processor.MAJOR_NUMBER:   "num",
 		processor.MAJOR_VARIABLE: "var",
 	}
+	classes_minor := map[processor.TokenMinor]string{
+		processor.MINOR_NAME_ATTRIBUTE: "natt",
+		processor.MINOR_NAME_TAG:       "ntag",
+	}
 
 	var out []string
 	out = append(out, fmt.Sprint(`<div class="highlight"><pre>`))
+	var cls string
 
 	for {
 		t := t.NextToken()
@@ -37,7 +42,12 @@ func (f outputfilter) Render(t processor.Tokenizer) string {
 		if t.Major == processor.MAJOR_RAW {
 			out = append(out, t.Value)
 		} else {
-			out = append(out, fmt.Sprintf(`<span class="%s">%s</span>`, classes[t.Major], html.EscapeString(t.Value)))
+			if t.Minor == processor.MINOR_RAW {
+				cls = classes_major[t.Major]
+			} else {
+				cls = strings.Join([]string{classes_major[t.Major], classes_minor[t.Minor]}, " ")
+			}
+			out = append(out, fmt.Sprintf(`<span class="%s">%s</span>`, cls, html.EscapeString(t.Value)))
 		}
 	}
 	out = append(out, fmt.Sprint(`</pre></div>`))

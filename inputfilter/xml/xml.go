@@ -23,17 +23,18 @@ type tokenizer struct {
 	pos int
 }
 
-func (t *tokenizer) appendToken(typ processor.TokenMajor, text string) {
+func (t *tokenizer) appendToken(major processor.TokenMajor, minor processor.TokenMinor, text string) {
 	prev_pos := len(t.c) - 1
 	if prev_pos >= 0 {
 		prev_token := t.c[prev_pos]
-		if prev_token.Major == typ {
+		if prev_token.Major == major && prev_token.Minor == minor {
 			prev_token.Value = prev_token.Value + text
 			return
 		}
 	}
 	tok := &processor.Token{}
-	tok.Major = typ
+	tok.Major = major
+	tok.Minor = minor
 	tok.Value = text
 	t.c = append(t.c, tok)
 }
@@ -95,39 +96,39 @@ func (f inputfilter) Highlight(data []byte) (processor.Tokenizer, error) {
 		text := scanner.Text()
 		if strings.HasPrefix(text, `"`) {
 			state = STRING
-			t.appendToken(processor.MAJOR_STRING, text)
+			t.appendToken(processor.MAJOR_STRING, processor.MINOR_RAW, text)
 			continue
 		}
 		switch text {
 		case "<!--":
-			t.appendToken(processor.MAJOR_COMMENT, text)
+			t.appendToken(processor.MAJOR_COMMENT, processor.MINOR_RAW, text)
 			state = COMMENT
 		case "-->":
-			t.appendToken(processor.MAJOR_COMMENT, text)
+			t.appendToken(processor.MAJOR_COMMENT, processor.MINOR_RAW, text)
 			state = RAW
 		case "<":
-			t.appendToken(processor.MAJOR_NAME, text)
+			t.appendToken(processor.MAJOR_NAME, processor.MINOR_NAME_TAG, text)
 			state = TAGSTART
 		case " ", "\n":
 			switch state {
 			case COMMENT:
-				t.appendToken(processor.MAJOR_COMMENT, text)
+				t.appendToken(processor.MAJOR_COMMENT, processor.MINOR_RAW, text)
 			case TAGSTART:
-				t.appendToken(processor.MAJOR_RAW, text)
+				t.appendToken(processor.MAJOR_RAW, processor.MINOR_RAW, text)
 				state = TAG
 			default:
-				t.appendToken(processor.MAJOR_RAW, text)
+				t.appendToken(processor.MAJOR_RAW, processor.MINOR_RAW, text)
 			}
 		default:
 			switch state {
 			case COMMENT:
-				t.appendToken(processor.MAJOR_COMMENT, text)
+				t.appendToken(processor.MAJOR_COMMENT, processor.MINOR_RAW, text)
 			case TAGSTART:
-				t.appendToken(processor.MAJOR_NAME, text)
+				t.appendToken(processor.MAJOR_NAME, processor.MINOR_NAME_TAG, text)
 			case TAG:
-				t.appendToken(processor.MAJOR_NAME, text)
+				t.appendToken(processor.MAJOR_NAME, processor.MINOR_NAME_ATTRIBUTE, text)
 			default:
-				t.appendToken(processor.MAJOR_RAW, text)
+				t.appendToken(processor.MAJOR_RAW, processor.MINOR_RAW, text)
 			}
 		}
 	}
