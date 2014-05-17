@@ -1,3 +1,17 @@
+// Package html is an output filter to generate an html chunk wrapped in a
+// div to be highlighted by CSS.
+// A sample output is
+//    <div class="highlight"><pre><span class="name ntag">&lt;root&gt;</span>
+//      <span class="name ntag">&lt;child</span> <span class="name ntag">/&gt;</span>
+//    <span class="name ntag">&lt;/root&gt;</span>
+//    </pre></div>
+// Which requires a suitable CSS file.
+//
+// Note that this package does not export any symbols, as it actively registers
+// at the process package with
+//     processor.RegisterOutputFilter("html", Render)
+// in the init function. Render
+//     (f filter) Render(t processor.Tokenizer) string
 package html
 
 import (

@@ -1,3 +1,6 @@
+// Basic functionality, don't consider this final in any way.
+
+// Syntax highlighting for XML files.
 package xml
 
 import (

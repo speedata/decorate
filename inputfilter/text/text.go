@@ -1,3 +1,4 @@
+// Sample input filter (basicly a no-op)
 package text
 
 import (

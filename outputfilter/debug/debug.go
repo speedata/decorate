@@ -1,3 +1,4 @@
+// Sample output filter for debugging purpose.
 package debug
 
 import (

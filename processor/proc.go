@@ -1,14 +1,10 @@
+// Main controller package for syntax highlighting
 package processor
 
 import (
 	"errors"
 	"strings"
 )
-
-// The input filter is expected to implement function Highlight which returns a Tokenizer.
-type InputFilter interface {
-	Highlight([]byte, chan Token)
-}
 
 type TypeMajor int
 type TypeMinor int
@@ -23,15 +19,18 @@ type Token struct {
 
 type HighlightFunc func([]byte, chan Token)
 type RenderFunc func(chan Token, chan string)
+type FilterFunc func(chan Token, chan Token)
 
 var (
 	inputfilters  map[string]HighlightFunc
 	outputfilters map[string]RenderFunc
+	sanitizers    map[string]FilterFunc
 )
 
 func init() {
 	inputfilters = make(map[string]HighlightFunc)
 	outputfilters = make(map[string]RenderFunc)
+	sanitizers = make(map[string]FilterFunc)
 }
 
 // These are the allowed token types
@@ -58,6 +57,10 @@ func RegisterInputFilter(name string, f HighlightFunc) {
 // All output filters are required to call this function exactly once.
 func RegisterOutputFilter(name string, f RenderFunc) {
 	outputfilters[name] = f
+}
+
+func RegisterSanitizer(name string, f FilterFunc) {
+	sanitizers[name] = f
 }
 
 // Return a list of available input filters.
@@ -91,10 +94,17 @@ func Highlight(inputfilter, outputfilter string, source []byte) (string, error) 
 		return "", errors.New("Output filter not declared")
 	}
 
+	sanitizer, ok := sanitizers["removeduplicates"]
+	if !ok {
+		return "", errors.New("Sanitizer not found")
+	}
+
 	chain := make(chan Token, 0)
+	out := make(chan Token, 0)
 	res := make(chan string, 0)
 	go ifilter(source, chain)
-	go ofilter(chain, res)
+	go sanitizer(chain, out)
+	go ofilter(out, res)
 	var ret []string
 	for {
 		select {

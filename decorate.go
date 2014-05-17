@@ -19,6 +19,9 @@ import (
 	_ "github.com/speedata/decorate/outputfilter/debug"
 	_ "github.com/speedata/decorate/outputfilter/html"
 	_ "github.com/speedata/decorate/outputfilter/text"
+
+	// and the sanitzers
+	_ "github.com/speedata/decorate/sanitizer/removeduplicates"
 )
 
 // Return a list of input filters (lexers).
