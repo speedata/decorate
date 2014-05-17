@@ -10,10 +10,6 @@ type InputFilter interface {
 	Highlight([]byte, chan Token)
 }
 
-type OutputFilter interface {
-	Render(chan Token, chan string)
-}
-
 type TypeMajor int
 type TypeMinor int
 
@@ -25,14 +21,17 @@ type Token struct {
 	Value string
 }
 
+type HighlightFunc func([]byte, chan Token)
+type RenderFunc func(chan Token, chan string)
+
 var (
-	inputfilters  map[string]InputFilter
-	outputfilters map[string]OutputFilter
+	inputfilters  map[string]HighlightFunc
+	outputfilters map[string]RenderFunc
 )
 
 func init() {
-	inputfilters = make(map[string]InputFilter)
-	outputfilters = make(map[string]OutputFilter)
+	inputfilters = make(map[string]HighlightFunc)
+	outputfilters = make(map[string]RenderFunc)
 }
 
 // These are the allowed token types
@@ -52,13 +51,13 @@ const (
 )
 
 // All lexers are required to call this function exactly once.
-func RegisterInputFilter(name string, filter InputFilter) {
-	inputfilters[name] = filter
+func RegisterInputFilter(name string, f HighlightFunc) {
+	inputfilters[name] = f
 }
 
 // All output filters are required to call this function exactly once.
-func RegisterOutputFilter(name string, filter OutputFilter) {
-	outputfilters[name] = filter
+func RegisterOutputFilter(name string, f RenderFunc) {
+	outputfilters[name] = f
 }
 
 // Return a list of available input filters.
@@ -83,20 +82,19 @@ func OutputFilters() []string {
 // string of the highlighted input source and nil or, if there is an error,
 // a perhaps empty string and an error.
 func Highlight(inputfilter, outputfilter string, source []byte) (string, error) {
-	ifilter := inputfilters[inputfilter]
-	if ifilter == nil {
+	ifilter, ok := inputfilters[inputfilter]
+	if !ok {
 		return "", errors.New("Input filter not declared")
 	}
-
-	ofilter := outputfilters[outputfilter]
-	if ofilter == nil {
+	ofilter, ok := outputfilters[outputfilter]
+	if !ok {
 		return "", errors.New("Output filter not declared")
 	}
 
 	chain := make(chan Token, 0)
 	res := make(chan string, 0)
-	go ifilter.Highlight(source, chain)
-	go ofilter.Render(chain, res)
+	go ifilter(source, chain)
+	go ofilter(chain, res)
 	var ret []string
 	for {
 		select {

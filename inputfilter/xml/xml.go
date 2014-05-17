@@ -9,11 +9,8 @@ import (
 	"unicode/utf8"
 )
 
-type inputfilter struct {
-}
-
 func init() {
-	processor.RegisterInputFilter("xml", inputfilter{})
+	processor.RegisterInputFilter("xml", Highlight)
 }
 
 func nameboundary(r rune) bool {
@@ -50,7 +47,7 @@ func send(out chan processor.Token, major processor.TypeMajor, minor processor.T
 	out <- tok
 }
 
-func (f inputfilter) Highlight(data []byte, out chan processor.Token) {
+func Highlight(data []byte, out chan processor.Token) {
 	buf := bytes.NewBuffer(data)
 	const (
 		RAW = iota

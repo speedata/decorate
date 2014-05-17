@@ -4,13 +4,11 @@ import (
 	"github.com/speedata/decorate/processor"
 )
 
-type outputfilter struct{}
-
 func init() {
-	processor.RegisterOutputFilter("text", outputfilter{})
+	processor.RegisterOutputFilter("text", Render)
 }
 
-func (f outputfilter) Render(in chan processor.Token, out chan string) {
+func Render(in chan processor.Token, out chan string) {
 	for {
 		select {
 		case t, ok := <-in:

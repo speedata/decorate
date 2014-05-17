@@ -5,14 +5,12 @@ import (
 	"github.com/speedata/decorate/processor"
 )
 
-type outputfilter struct{}
-
 func init() {
-	processor.RegisterOutputFilter("debug", outputfilter{})
+	processor.RegisterOutputFilter("debug", Render)
 }
 
 // Gets called when the user requests debug output
-func (f outputfilter) Render(in chan processor.Token, out chan string) {
+func Render(in chan processor.Token, out chan string) {
 	tagnames := map[processor.TypeMajor]string{
 		processor.MAJOR_RAW:      "raw",
 		processor.MAJOR_COMMENT:  "comment",

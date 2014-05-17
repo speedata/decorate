@@ -7,14 +7,12 @@ import (
 	"strings"
 )
 
-type outputfilter struct{}
-
 func init() {
-	processor.RegisterOutputFilter("html", outputfilter{})
+	processor.RegisterOutputFilter("html", Render)
 }
 
 // Gets called when the user requests HTML output
-func (f outputfilter) Render(in chan processor.Token, out chan string) {
+func Render(in chan processor.Token, out chan string) {
 	classes_major := map[processor.TypeMajor]string{
 		processor.MAJOR_COMMENT:  "c",
 		processor.MAJOR_STRING:   "s",
