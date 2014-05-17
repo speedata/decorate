@@ -32,7 +32,8 @@ func (f inputfilter) Highlight(data []byte) (processor.Tokenizer, error) {
 	t := &Tokenizer{}
 
 	tok := &processor.Token{
-		Typ:   processor.RAW,
+		Major: processor.MAJOR_RAW,
+		Minor: 0,
 		Value: string(data),
 	}
 	t.c = append(t.c, tok)

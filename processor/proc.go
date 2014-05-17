@@ -18,12 +18,14 @@ type Tokenizer interface {
 	NextToken() *Token
 }
 
-type Tokentype int
+type TokenMajor int
+type TokenMinor int
 
 // This is the basic data structure in the intermediate format between
 // the input filter and output filter.
 type Token struct {
-	Typ   Tokentype
+	Major TokenMajor
+	Minor TokenMinor
 	Value string
 }
 
@@ -39,10 +41,18 @@ func init() {
 
 // These are the allowed token types
 const (
-	RAW Tokentype = iota
-	NAMETAG
-	NAMEATTRIBUTE
-	LITERALSTRING
+	MAJOR_RAW TokenMajor = iota
+	MAJOR_COMMENT
+	MAJOR_STRING
+	MAJOR_ERROR
+	MAJOR_GENERIC
+	MAJOR_KEYWORD
+	MAJOR_NAME
+	MAJOR_NUMBER
+	MAJOR_VARIABLE
+	MINOR_RAW TokenMinor = iota
+	MINOR_NAME_TAG
+	MINOR_NAME_ATTRIBUTE
 )
 
 // All lexers are required to call this function exactly once.

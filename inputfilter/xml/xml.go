@@ -1,11 +1,12 @@
 package xml
 
 import (
+	"bufio"
 	"bytes"
-	"encoding/xml"
-	"fmt"
 	"github.com/speedata/decorate/processor"
-	"log"
+	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 type inputfilter struct {
@@ -22,17 +23,17 @@ type tokenizer struct {
 	pos int
 }
 
-func (t *tokenizer) appendToken(typ processor.Tokentype, text string) {
+func (t *tokenizer) appendToken(typ processor.TokenMajor, text string) {
 	prev_pos := len(t.c) - 1
 	if prev_pos >= 0 {
 		prev_token := t.c[prev_pos]
-		if prev_token.Typ == typ {
+		if prev_token.Major == typ {
 			prev_token.Value = prev_token.Value + text
 			return
 		}
 	}
 	tok := &processor.Token{}
-	tok.Typ = typ
+	tok.Major = typ
 	tok.Value = text
 	t.c = append(t.c, tok)
 }
@@ -47,32 +48,87 @@ func (t *tokenizer) NextToken() *processor.Token {
 	return tok
 }
 
+var (
+	TCOMMENT = []byte{'<', '!', '-', '-'}
+)
+
+func nameboundary(r rune) bool {
+	return unicode.IsSpace(r) || r == '=' || r == '/'
+}
+
+func tokenizeXML(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	if bytes.HasPrefix(data, TCOMMENT) {
+		return len(TCOMMENT), TCOMMENT, nil
+	}
+	r, size := utf8.DecodeRune(data)
+	if unicode.IsSpace(r) {
+		return size, data[:size], nil
+	}
+	if data[0] == '<' || data[0] == '>' {
+		return 1, data[:1], nil
+	}
+	if data[0] == '/' && data[1] == '>' {
+		return 2, data[:2], nil
+	}
+	num := bytes.IndexFunc(data, nameboundary)
+	if num > 0 {
+		return num, data[:num], nil
+	}
+	return 1, data[:1], nil
+
+}
+
 func (f inputfilter) Highlight(data []byte) (processor.Tokenizer, error) {
-	// we should not use xml.Decoder for that purpose, because it's not a 1:1 copy of the input
-	// but for a start, it's better than nothing, or?
 	t := &tokenizer{}
-	r := bytes.NewReader(data)
-	decoder := xml.NewDecoder(r)
-	for {
-		tok, err := decoder.RawToken()
-		if err != nil {
-			break
+	buf := bytes.NewBuffer(data)
+	const (
+		RAW = iota
+		COMMENT
+		STRING
+		TAGSTART
+		TAG
+	)
+	state := RAW
+	scanner := bufio.NewScanner(buf)
+	scanner.Split(tokenizeXML)
+	for scanner.Scan() {
+		text := scanner.Text()
+		if strings.HasPrefix(text, `"`) {
+			state = STRING
+			t.appendToken(processor.MAJOR_STRING, text)
+			continue
 		}
-		switch v := tok.(type) {
-		case xml.StartElement:
-			t.appendToken(processor.NAMETAG, fmt.Sprintf("<%s", v.Name.Local))
-			for _, v := range v.Attr {
-				t.appendToken(processor.RAW, " ")
-				t.appendToken(processor.NAMEATTRIBUTE, v.Name.Local+"=")
-				t.appendToken(processor.LITERALSTRING, fmt.Sprintf(`"%s"`, v.Value))
+		switch text {
+		case "<!--":
+			t.appendToken(processor.MAJOR_COMMENT, text)
+			state = COMMENT
+		case "-->":
+			t.appendToken(processor.MAJOR_COMMENT, text)
+			state = RAW
+		case "<":
+			t.appendToken(processor.MAJOR_NAME, text)
+			state = TAGSTART
+		case " ", "\n":
+			switch state {
+			case COMMENT:
+				t.appendToken(processor.MAJOR_COMMENT, text)
+			case TAGSTART:
+				t.appendToken(processor.MAJOR_RAW, text)
+				state = TAG
+			default:
+				t.appendToken(processor.MAJOR_RAW, text)
 			}
-			t.appendToken(processor.NAMETAG, fmt.Sprintf(">"))
-		case xml.EndElement:
-			t.appendToken(processor.NAMETAG, fmt.Sprintf(`</%s>`, v.Name.Local))
-		case xml.CharData:
-			t.appendToken(processor.RAW, string(v.Copy()))
 		default:
-			log.Printf(">>> %T", v)
+			switch state {
+			case COMMENT:
+				t.appendToken(processor.MAJOR_COMMENT, text)
+			case TAGSTART:
+				t.appendToken(processor.MAJOR_NAME, text)
+			case TAG:
+				t.appendToken(processor.MAJOR_NAME, text)
+			default:
+				t.appendToken(processor.MAJOR_RAW, text)
+			}
 		}
 	}
 	return t, nil

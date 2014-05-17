@@ -15,11 +15,15 @@ func init() {
 // Gets called when the user requests HTML output
 func (f outputfilter) Render(t processor.Tokenizer) string {
 	tagnames := map[processor.TokenMajor]string{
-		processor.RAW:           "(raw)",
-		processor.TCOMMENT:      "c",
-		processor.NAMETAG:       "nt",
-		processor.NAMEATTRIBUTE: "na",
-		processor.LITERALSTRING: "s",
+		processor.MAJOR_RAW:      "raw",
+		processor.MAJOR_COMMENT:  "comment",
+		processor.MAJOR_STRING:   "string",
+		processor.MAJOR_ERROR:    "error",
+		processor.MAJOR_GENERIC:  "generic",
+		processor.MAJOR_KEYWORD:  "keyword",
+		processor.MAJOR_NAME:     "name",
+		processor.MAJOR_NUMBER:   "number",
+		processor.MAJOR_VARIABLE: "variable",
 	}
 
 	var out []string
