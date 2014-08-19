@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 
 	// all input filters
+	_ "github.com/speedata/decorate/inputfilter/lua"
 	_ "github.com/speedata/decorate/inputfilter/text"
 	_ "github.com/speedata/decorate/inputfilter/xml"
 
