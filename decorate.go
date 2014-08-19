@@ -35,6 +35,14 @@ func OutputFilters() []string {
 	return processor.OutputFilters()
 }
 
+func Highlight(data []byte, inputfilter string, outputfilter string) (string, error) {
+	ret, err := processor.Highlight(inputfilter, outputfilter, data)
+	if err != nil {
+		return "", err
+	}
+	return ret, nil
+}
+
 // Return a string rendering the given file using the outputfilter and running the inputfilter as a lexer.
 func HighlightFile(filename string, inputfilter string, outputfilter string) (string, error) {
 	data, err := ioutil.ReadFile(filename)
