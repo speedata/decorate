@@ -36,6 +36,7 @@ func Render(in chan processor.Token, out chan string) {
 		processor.MAJOR_NAME:     "name",
 		processor.MAJOR_NUMBER:   "num",
 		processor.MAJOR_VARIABLE: "var",
+		processor.MAJOR_OPERATOR: "op",
 	}
 	classes_minor := map[processor.TypeMinor]string{
 		processor.MINOR_NAME_ATTRIBUTE: "natt",
